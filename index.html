@@ -1,133 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>#000000</title>
-    <link type="image/x-icon" rel="shortcut icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAHklEQVQ4T2NkYGD4z0ABYBw1gGE0DBhGw4BhWIQBAE5OEAELnjVHAAAAAElFTkSuQmCC">
+    <title>Pijl naar huis</title>
     <style>
-        :root {
-            --color: #000000;
-            --color-transparent: #00000022;
-        }
-
-        ::selection {
-            background: var(--color-transparent);
-        }
-
-        html,
-        body {
-            background: var(--color);
-            height: 100%;
-            margin: 0;
-        }
-
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        #color {
-            background: white;
-            color: var(--color);
-            font-size: 2.5rem;
-            font-weight: 300;
-            padding: 2.25rem 3rem;
-            font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto, segoe ui, arial, sans-serif;
-            cursor: text;
+        body { text-align: center; font-family: Arial, sans-serif; }
+        #compass-container { position: relative; width: 150px; margin: 50px auto; }
+        #arrow {
+            width: 100px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: 50% 100%;
+            transition: transform 0.3s ease-out;
         }
     </style>
 </head>
-
 <body>
-    <p id="color">#000000</p>
+    <h2>Deze pijl wijst naar huis:</h2>
+    <div id="compass-container">
+        <img id="arrow" src="https://upload.wikimedia.org/wikipedia/commons/3/3d/Simple_arrow.svg">
+    </div>
+    <p id="status">Locatie ophalen...</p>
+
     <script>
-        function randomInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1) + min);
+        const homeCoords = { lat: 52.379189, lon: 4.899431 }; // Vervang met jouw huiscoördinaten
+        let currentHeading = 0;
+        let lastAngles = [];
+
+        function toRadians(degrees) { return degrees * (Math.PI / 180); }
+        function toDegrees(radians) { return radians * (180 / Math.PI); }
+
+        function getBearing(lat1, lon1, lat2, lon2) {
+            let dLon = toRadians(lon2 - lon1);
+            let y = Math.sin(dLon) * Math.cos(toRadians(lat2));
+            let x = Math.cos(toRadians(lat1)) * Math.sin(toRadians(lat2)) - 
+                    Math.sin(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.cos(dLon);
+            return (toDegrees(Math.atan2(y, x)) + 360) % 360;
         }
 
-        function hslToHex(h, s, l) {
-            h /= 360;
-            s /= 100;
-            l /= 100;
-            var r = void 0,
-                g = void 0,
-                b = void 0;
-            if (s === 0) {
-                r = g = b = l; // achromatic
+        function smoothAngle(newAngle) {
+            lastAngles.push(newAngle);
+            if (lastAngles.length > 5) lastAngles.shift(); // Houd alleen de laatste 5 waarden
+            return lastAngles.reduce((a, b) => a + b, 0) / lastAngles.length;
+        }
+
+        function updateArrow(bearing) {
+            const relativeAngle = (bearing - currentHeading + 360) % 360;
+            const smoothRotation = smoothAngle(relativeAngle);
+            document.getElementById('arrow').style.transform = `rotate(${smoothRotation}deg)`;
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition((position) => {
+                    let userLat = position.coords.latitude;
+                    let userLon = position.coords.longitude;
+                    let bearing = getBearing(userLat, userLon, homeCoords.lat, homeCoords.lon);
+                    document.getElementById('status').textContent = `Jouw locatie: ${userLat.toFixed(5)}, ${userLon.toFixed(5)}`;
+                    updateArrow(bearing);
+                }, (error) => {
+                    document.getElementById('status').textContent = "Locatie niet beschikbaar.";
+                }, { enableHighAccuracy: true });
             } else {
-                var hue2rgb = function hue2rgb(p, q, t) {
-                    if (t < 0) t += 1;
-                    if (t > 1) t -= 1;
-                    if (t < 1 / 6) return p + (q - p) * 6 * t;
-                    if (t < 1 / 2) return q;
-                    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-                    return p;
-                };
-                var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                var p = 2 * l - q;
-                r = hue2rgb(p, q, h + 1 / 3);
-                g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1 / 3);
+                document.getElementById('status').textContent = "Geolocation wordt niet ondersteund.";
             }
-            var toHex = function toHex(x) {
-                var hex = Math.round(x * 255).toString(16);
-                return hex.length === 1 ? '0' + hex : hex;
-            };
-            return '#' + toHex(r) + toHex(g) + toHex(b);
         }
 
-        window.onload = function () {
-            let stopProp = function (ev) {
-                ev.stopPropagation();
+        window.addEventListener("deviceorientation", (event) => {
+            if (event.alpha !== null) {
+                currentHeading = event.alpha;
             }
+        });
 
-            var colorElement = document.getElementById("color");
-            colorElement.addEventListener("click", stopProp, false);
-            colorElement.addEventListener("mousedown", stopProp, false);
-
-            var setFavicon = function (hex) {
-                var canvas = document.createElement('canvas');
-                canvas.width = 16;
-                canvas.height = 16;
-                var ctx = canvas.getContext('2d');
-                ctx.fillStyle = hex;
-                ctx.fillRect(0, 0, 16, 16);
-                document.getElementsByTagName('link')[0].href = canvas.toDataURL("image/x-icon");
-            }
-
-            var setRandomColor = function setRandomColor() {
-                var h = void 0,
-                    s = void 0,
-                    l = void 0;
-
-                h = randomInt(0, 359);
-                s = randomInt(55, 75);
-                l = randomInt(40, 60);
-
-                document.documentElement.style.setProperty('--color', 'hsl(' + h + ', ' + s + '%, ' + l + '%)');
-                var hex = hslToHex(h, s, l);
-                document.title = hex;
-                colorElement.innerHTML = hex;
-                document.documentElement.style.setProperty('--color-transparent', hex + '22');
-
-                setFavicon(hex);
-            };
-            setRandomColor();
-
-            var body = document.getElementsByTagName("body")[0];
-            body.addEventListener("mousedown", function (ev) {
-                ev.preventDefault();
-            });
-            body.addEventListener("click", function () {
-                setRandomColor();
-            }, false);
-        };
+        getLocation();
     </script>
 </body>
-
 </html>
