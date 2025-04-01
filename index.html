@@ -28,6 +28,7 @@
         <img id="arrow" src="up-arrow.png">
     </div>
     <p id="status">Locatie ophalen...</p>
+    <button id="enableOrientation">Toestemming voor kompas</button>
 
     <script>
         const homeCoords = { lat: 52.3345850808045, lon: 5.5958499010424365 }; // https://maps.app.goo.gl/yqG3jHMLT8Fa2Hb66
@@ -80,16 +81,35 @@
             }
         }
 
-        // Luister naar de oriëntatie van het apparaat (bijv. draaiing van de telefoon)
-        window.addEventListener("deviceorientation", (event) => {
-            if (event.alpha !== null) {
-                currentHeading = event.alpha;  // Verkrijg de kompasrichting van het apparaat zelf
-
-                getLocation();  // Haal de locatie van de gebruiker op
+        // Vraag toestemming om de DeviceOrientation API te gebruiken (voor iOS)
+        document.getElementById("enableOrientation").addEventListener("click", function() {
+            if (typeof DeviceOrientationEvent.requestPermission === "function") {
+                // iOS 13+ specifieke toestemming vragen
+                DeviceOrientationEvent.requestPermission().then(response => {
+                    if (response === "granted") {
+                        // Als toestemming is gegeven, begin met het luisteren naar device orientation
+                        window.addEventListener("deviceorientation", (event) => {
+                            if (event.alpha !== null) {
+                                currentHeading = event.alpha;  // Verkrijg de kompasrichting van het apparaat zelf
+                            }
+                        });
+                        getLocation(); // Verkrijg de locatie van de gebruiker
+                    } else {
+                        document.getElementById('status').textContent = "Toestemming geweigerd voor oriëntatie.";
+                    }
+                }).catch((error) => {
+                    document.getElementById('status').textContent = "Fout bij het aanvragen van toestemming: " + error;
+                });
+            } else {
+                // Als geen toestemming vereist is (bijv. op Android)
+                window.addEventListener("deviceorientation", (event) => {
+                    if (event.alpha !== null) {
+                        currentHeading = event.alpha;  // Verkrijg de kompasrichting van het apparaat zelf
+                    }
+                });
+                getLocation(); // Verkrijg de locatie van de gebruiker
             }
         });
-
-        getLocation();  // Haal de locatie van de gebruiker op
     </script>
 </body>
 </html>
