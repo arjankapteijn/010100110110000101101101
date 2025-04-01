@@ -29,6 +29,13 @@
         let currentHeading = 0;
         let lastAngles = [];
 
+        window.addEventListener("deviceorientation", (event) => {
+            if (event.alpha !== null) {
+                currentHeading = event.alpha; // alpha is de rotatie van de telefoon zelf
+            }
+        });
+
+
         function toRadians(degrees) { return degrees * (Math.PI / 180); }
         function toDegrees(radians) { return radians * (180 / Math.PI); }
 
@@ -47,8 +54,9 @@
         }
 
         function updateArrow(bearing) {
-            const relativeAngle = (bearing - currentHeading + 360) % 360;
-            const smoothRotation = smoothAngle(relativeAngle);
+            // Het aanpassen van de pijl ten opzichte van zowel de locatie als de apparaatoriëntatie
+            const relativeAngle = (bearing - currentHeading + 360) % 360; // Hier compenseren we de draaiing van de telefoon
+            const smoothRotation = smoothAngle(relativeAngle); // Smoothing van de hoeken
             document.getElementById('arrow').style.transform = `rotate(${smoothRotation}deg)`;
         }
 
