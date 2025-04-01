@@ -26,16 +26,12 @@
 
     <script>
         const homeCoords = { lat: 52.379189, lon: 4.899431 }; // Vervang met jouw huiscoördinaten
-        let currentHeading = 0;  // Kompasrichting van het apparaat (van de device orientation)
-        let lastAngles = [];  // Voor smoothing van de hoeken
-        
-        window.addEventListener("deviceorientation", (event) => {
-            if (event.alpha !== null) {
-                currentHeading = event.alpha; // alpha is de rotatie van de telefoon zelf
-            }
-        });
-        
-        // Berekening van de richting (bearing) naar je huis
+        let currentHeading = 0;
+        let lastAngles = [];
+
+        function toRadians(degrees) { return degrees * (Math.PI / 180); }
+        function toDegrees(radians) { return radians * (180 / Math.PI); }
+
         function getBearing(lat1, lon1, lat2, lon2) {
             let dLon = toRadians(lon2 - lon1);
             let y = Math.sin(dLon) * Math.cos(toRadians(lat2));
@@ -43,15 +39,19 @@
                     Math.sin(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.cos(dLon);
             return (toDegrees(Math.atan2(y, x)) + 360) % 360;
         }
-        
+
+        function smoothAngle(newAngle) {
+            lastAngles.push(newAngle);
+            if (lastAngles.length > 5) lastAngles.shift(); // Houd alleen de laatste 5 waarden
+            return lastAngles.reduce((a, b) => a + b, 0) / lastAngles.length;
+        }
+
         function updateArrow(bearing) {
-            // Het aanpassen van de pijl ten opzichte van zowel de locatie als de apparaatoriëntatie
-            const relativeAngle = (bearing - currentHeading + 360) % 360; // Hier compenseren we de draaiing van de telefoon
-            const smoothRotation = smoothAngle(relativeAngle); // Smoothing van de hoeken
+            const relativeAngle = (bearing - currentHeading + 360) % 360;
+            const smoothRotation = smoothAngle(relativeAngle);
             document.getElementById('arrow').style.transform = `rotate(${smoothRotation}deg)`;
         }
-        
-        // Verkrijg de huidige locatie van de gebruiker
+
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition((position) => {
@@ -67,7 +67,13 @@
                 document.getElementById('status').textContent = "Geolocation wordt niet ondersteund.";
             }
         }
-        
+
+        window.addEventListener("deviceorientation", (event) => {
+            if (event.alpha !== null) {
+                currentHeading = event.alpha;
+            }
+        });
+
         getLocation();
     </script>
 </body>
