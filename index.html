@@ -54,14 +54,18 @@
         // Smoothing van de hoekberekening
         function smoothAngle(newAngle) {
             lastAngles.push(newAngle);
-            if (lastAngles.length > 5) lastAngles.shift(); // Houd alleen de laatste 5 waarden
+            if (lastAngles.length > 5) lastAngles.shift();
             return lastAngles.reduce((a, b) => a + b, 0) / lastAngles.length;
         }
 
         // Update de pijl op basis van de berekende richting
-        function updateArrow(bearing) {
-            const relativeAngle = (bearing - currentHeading + 360) % 360; // Hier compenseren we de draaiing van de telefoon
-            const smoothRotation = smoothAngle(relativeAngle); // Smoothing van de hoeken
+        function updateArrow() {
+            if (userCoords.lat === null || userCoords.lon === null) return;
+
+            let bearing = getBearing(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
+            let relativeAngle = (bearing - currentHeading + 360) % 360;
+            let smoothRotation = smoothAngle(relativeAngle);
+            
             document.getElementById('arrow').style.transform = `rotate(${smoothRotation}deg)`;
         }
 
@@ -69,11 +73,10 @@
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition((position) => {
-                    let userLat = position.coords.latitude;
-                    let userLon = position.coords.longitude;
-                    let bearing = getBearing(userLat, userLon, homeCoords.lat, homeCoords.lon);
-                    document.getElementById('status').textContent = `Jouw locatie: ${userLat.toFixed(5)}, ${userLon.toFixed(5)}. Richting naar huis: ${bearing.toFixed(2)}°`;
-                    updateArrow(bearing);  // Update de pijl naar huis
+                    userCoords.lat = position.coords.latitude;
+                    userCoords.lon = position.coords.longitude;
+                    document.getElementById('status').textContent = `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}`;
+                    updateArrow();
                 }, (error) => {
                     document.getElementById('status').textContent = "Locatie niet beschikbaar.";
                 }, { enableHighAccuracy: true });
@@ -83,20 +86,24 @@
         }
 
         // Vraag toestemming om de DeviceOrientation API te gebruiken (voor iOS)
+        function startOrientationTracking() {
+            window.addEventListener("deviceorientation", (event) => {
+                if (event.webkitCompassHeading !== undefined) {
+                    currentHeading = event.webkitCompassHeading;  // iOS: Magnetisch noorden
+                } else if (event.alpha !== null) {
+                    currentHeading = 360 - event.alpha; // Android: Corrigeer alpha voor juiste richting
+                }
+                updateArrow();
+            });
+        }
+
         document.getElementById("enableOrientation").addEventListener("click", function() {
             if (typeof DeviceOrientationEvent.requestPermission === "function") {
                 // iOS 13+ specifieke toestemming vragen
                 DeviceOrientationEvent.requestPermission().then(response => {
                     if (response === "granted") {
-                        // Als toestemming is gegeven, begin met het luisteren naar device orientation
-                        window.addEventListener("deviceorientation", (event) => {
-                            if (event.webkitCompassHeading !== undefined) {
-                                currentHeading = event.webkitCompassHeading;  // Gebruik magnetische heading op iOS
-                            } else if (event.alpha !== null) {
-                                currentHeading = 360 - event.alpha; // Corrigeer voor de standaard alpha waarde
-                            }
-                        });
-                        getLocation(); // Verkrijg de locatie van de gebruiker
+                        startOrientationTracking();
+                        getLocation();
                     } else {
                         document.getElementById('status').textContent = "Toestemming geweigerd voor oriëntatie.";
                     }
@@ -104,15 +111,8 @@
                     document.getElementById('status').textContent = "Fout bij het aanvragen van toestemming: " + error;
                 });
             } else {
-                // Als geen toestemming vereist is (bijv. op Android)
-                window.addEventListener("deviceorientation", (event) => {
-                    if (event.webkitCompassHeading !== undefined) {
-                        currentHeading = event.webkitCompassHeading;
-                    } else if (event.alpha !== null) {
-                        currentHeading = 360 - event.alpha;
-                    }
-                });
-                getLocation(); // Verkrijg de locatie van de gebruiker
+                startOrientationTracking();
+                getLocation();
             }
         });
     </script>
