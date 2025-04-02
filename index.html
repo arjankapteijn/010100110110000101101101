@@ -89,8 +89,10 @@
                     if (response === "granted") {
                         // Als toestemming is gegeven, begin met het luisteren naar device orientation
                         window.addEventListener("deviceorientation", (event) => {
-                            if (event.alpha !== null) {
-                                currentHeading = event.alpha;  // Verkrijg de kompasrichting van het apparaat zelf
+                            if (event.webkitCompassHeading !== undefined) {
+                                currentHeading = event.webkitCompassHeading;  // Gebruik magnetische heading op iOS
+                            } else if (event.alpha !== null) {
+                                currentHeading = 360 - event.alpha; // Corrigeer voor de standaard alpha waarde
                             }
                         });
                         getLocation(); // Verkrijg de locatie van de gebruiker
@@ -103,8 +105,10 @@
             } else {
                 // Als geen toestemming vereist is (bijv. op Android)
                 window.addEventListener("deviceorientation", (event) => {
-                    if (event.alpha !== null) {
-                        currentHeading = event.alpha;  // Verkrijg de kompasrichting van het apparaat zelf
+                    if (event.webkitCompassHeading !== undefined) {
+                        currentHeading = event.webkitCompassHeading;
+                    } else if (event.alpha !== null) {
+                        currentHeading = 360 - event.alpha;
                     }
                 });
                 getLocation(); // Verkrijg de locatie van de gebruiker
