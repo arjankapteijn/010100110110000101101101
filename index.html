@@ -136,28 +136,40 @@
         // Verkrijg de huidige locatie van de gebruiker
         function getLocation() {
             if (navigator.geolocation) {
+                let geoOptions = {
+                    enableHighAccuracy: true, 
+                    maximumAge: 0, // Altijd een verse locatie
+                    timeout: 5000  // Geef snel een foutmelding als GPS niet werkt
+                };
+
                 navigator.geolocation.watchPosition((position) => {
-                    userCoords.lat = position.coords.latitude;
-                    userCoords.lon = position.coords.longitude;
+                    let newLat = position.coords.latitude;
+                    let newLon = position.coords.longitude;
 
-                    let bearing = getBearing(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
-                    let distance = getDistance(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
-                    
-                    // 🚀 Rond de afstand af: kilometers of meters?
-                    let distanceText = distance >= 1000 
-                        ? `${(distance / 1000).toFixed(2)} km` 
-                        : `${Math.round(distance)} meter`;
+                    // Update locatie alleen als deze echt verandert (voorkomt onnodige updates)
+                    if (newLat !== userCoords.lat || newLon !== userCoords.lon) {
+                        userCoords.lat = newLat;
+                        userCoords.lon = newLon;
 
-                    document.getElementById('status').innerHTML =
-                        `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}<br>
-                        Richting naar huis: ${bearing.toFixed(2)}°<br>
-                        Afstand: ${distanceText}`;
+                        let bearing = getBearing(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
+                        let distance = getDistance(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
+                        
+                        let distanceText = distance >= 1000 
+                            ? `${(distance / 1000).toFixed(2)} km` 
+                            : `${Math.round(distance)} meter`;
 
-                    updateArrow();
-                    updateCompass();
+                        document.getElementById('status').innerHTML =
+                            `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}<br>
+                            Richting naar huis: ${bearing.toFixed(2)}°<br>
+                            Afstand: ${distanceText}`;
+
+                        updateArrow();
+                        updateCompass();
+                    }
                 }, (error) => {
+                    console.error("GPS fout: ", error);
                     document.getElementById('status').textContent = "Locatie niet beschikbaar.";
-                }, { enableHighAccuracy: true });
+                }, geoOptions);
             } else {
                 document.getElementById('status').textContent = "Geolocation wordt niet ondersteund.";
             }
