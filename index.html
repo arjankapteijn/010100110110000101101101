@@ -69,6 +69,7 @@
         let userCoords = { lat: null, lon: null };
         let lastAngles = []; // Houd de vorige hoeken bij voor een soepele overgang
         let lastCompassAngle = 0;  // Houd de vorige draaihoek van de windroos bij
+        let androidNeedsCorrection = null; // Onbekend bij start
 
         // Functie om graden om te zetten naar radialen
         function toRadians(degrees) { return degrees * (Math.PI / 180); }
@@ -162,14 +163,33 @@
             }
         }
 
-        // Vraag toestemming om de DeviceOrientation API te gebruiken (voor iOS)
         function startOrientationTracking() {
             window.addEventListener("deviceorientation", (event) => {
                 if (event.webkitCompassHeading !== undefined) {
-                    currentHeading = event.webkitCompassHeading;  // iOS: Magnetisch noorden
+                    // iOS: Gebruik de magnetische heading direct
+                    currentHeading = event.webkitCompassHeading;
                 } else if (event.alpha !== null) {
-                    currentHeading = 360 - event.alpha; // Android: Corrigeer alpha voor juiste richting
+                    let rawHeading = 360 - event.alpha; // Standaard Android-aanpak
+                    let correctedHeading = rawHeading; 
+
+                    // Detecteer of Android 180° verkeerd zit
+                    if (androidNeedsCorrection === null && window.lastBearing !== undefined) {
+                        let diff = Math.abs(rawHeading - window.lastBearing);
+                        if (diff > 170 && diff < 190) {
+                            androidNeedsCorrection = true;
+                        } else {
+                            androidNeedsCorrection = false;
+                        }
+                    }
+
+                    // Pas correctie toe als dat nodig blijkt
+                    if (androidNeedsCorrection) {
+                        correctedHeading = (rawHeading + 180) % 360;
+                    }
+
+                    currentHeading = correctedHeading;
                 }
+
                 updateArrow();
                 updateCompass();
             });
