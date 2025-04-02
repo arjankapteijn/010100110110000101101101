@@ -71,7 +71,7 @@
                     let userLat = position.coords.latitude;
                     let userLon = position.coords.longitude;
                     let bearing = getBearing(userLat, userLon, homeCoords.lat, homeCoords.lon);
-                    document.getElementById('status').textContent = `Jouw locatie: ${userLat.toFixed(5)}, ${userLon.toFixed(5)}`;
+                    document.getElementById('status').textContent = `Jouw locatie: ${userLat.toFixed(5)}, ${userLon.toFixed(5)}. Richting naar huis: ${bearing.toFixed(2)}°`;
                     updateArrow(bearing);  // Update de pijl naar huis
                 }, (error) => {
                     document.getElementById('status').textContent = "Locatie niet beschikbaar.";
