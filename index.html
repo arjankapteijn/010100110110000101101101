@@ -42,6 +42,12 @@
         // Functie om radialen om te zetten naar graden
         function toDegrees(radians) { return radians * (180 / Math.PI); }
 
+        // Bereken de kortste rotatiehoek
+        function shortestRotationAngle(currentAngle, targetAngle) {
+            let delta = (targetAngle - currentAngle + 540) % 360 - 180; 
+            return currentAngle + delta;  
+        }
+
         // Bereken de richting (bearing) naar je huis
         function getBearing(lat1, lon1, lat2, lon2) {
             let dLon = toRadians(lon2 - lon1);
@@ -64,7 +70,11 @@
 
             let bearing = getBearing(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
             let relativeAngle = (bearing - currentHeading + 360) % 360;
-            let smoothRotation = smoothAngle(relativeAngle);
+            
+            // Pas de slimme rotatiecorrectie toe
+            let correctedRotation = shortestRotationAngle(lastAngles.length ? lastAngles[lastAngles.length - 1] : 0, relativeAngle);
+
+            let smoothRotation = smoothAngle(correctedRotation);
             
             document.getElementById('arrow').style.transform = `rotate(${smoothRotation}deg)`;
         }
