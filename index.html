@@ -123,9 +123,9 @@
                         ? `${(distance / 1000).toFixed(2)} km` 
                         : `${Math.round(distance)} meter`;
 
-                    document.getElementById('status').textContent =
-                        `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}
-                        Richting naar huis: ${bearing.toFixed(2)}°
+                    document.getElementById('status').innerHTML =
+                        `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}<br>
+                        Richting naar huis: ${bearing.toFixed(2)}°<br>
                         Afstand: ${distanceText}`;
 
                     updateArrow();
