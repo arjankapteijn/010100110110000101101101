@@ -67,6 +67,18 @@
             return (toDegrees(Math.atan2(y, x)) + 360) % 360;
         }
 
+        // Bereken afstand tussen twee coördinaten in meters
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000; // Straal van de aarde in meters
+            let dLat = toRadians(lat2 - lat1);
+            let dLon = toRadians(lon2 - lon1);
+            let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Afstand in meters
+        }
+
         // Smoothing van de hoekberekening
         function smoothAngle(newAngle) {
             lastAngles.push(newAngle);
@@ -102,7 +114,15 @@
                 navigator.geolocation.watchPosition((position) => {
                     userCoords.lat = position.coords.latitude;
                     userCoords.lon = position.coords.longitude;
-                    document.getElementById('status').textContent = `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}`;
+
+                    let bearing = getBearing(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
+                    let distance = getDistance(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
+                    
+                    document.getElementById('status').textContent =
+                        `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}
+                        Richting naar huis: ${bearing.toFixed(2)}°
+                        Afstand: ${distance.toFixed(1)} meter`;
+
                     updateArrow();
                     updateCompass();
                 }, (error) => {
