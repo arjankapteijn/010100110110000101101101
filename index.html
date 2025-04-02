@@ -5,15 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kom naar huis! 🏠</title>
     <style>
-        body {
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; /* Voorkomt scrollen als er witte randen waren */
+
             text-align: center; 
             font-family: Arial, sans-serif;
-            background-image: url('background.jpeg'); /* Vervang met de bestandsnaam */
-            background-size: cover; /* Zorgt ervoor dat de afbeelding de hele pagina vult */
-            background-position: center; /* Centreert de afbeelding */
-            background-repeat: no-repeat; /* Voorkomt herhaling */
         }
-
+        body {
+            background-image: url('background.jpeg'); /* Vervang met de bestandsnaam */
+            background-size: cover; /* Bedekt het hele scherm, zelfs als er wat wordt afgesneden */
+            background-position: center; /* Centreert de afbeelding netjes */
+            background-repeat: no-repeat; /* Geen herhaling */
+            min-height: 100vh; /* Zorgt ervoor dat het altijd het hele scherm vult */
+        }
         #compass-container {
             position: relative;
             width: 200px;
