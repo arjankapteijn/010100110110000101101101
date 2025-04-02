@@ -118,10 +118,15 @@
                     let bearing = getBearing(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
                     let distance = getDistance(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
                     
+                    // 🚀 Rond de afstand af: kilometers of meters?
+                    let distanceText = distance >= 1000 
+                        ? `${(distance / 1000).toFixed(2)} km` 
+                        : `${Math.round(distance)} meter`;
+
                     document.getElementById('status').textContent =
                         `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}
                         Richting naar huis: ${bearing.toFixed(2)}°
-                        Afstand: ${distance.toFixed(1)} meter`;
+                        Afstand: ${distanceText}`;
 
                     updateArrow();
                     updateCompass();
