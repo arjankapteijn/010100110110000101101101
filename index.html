@@ -43,7 +43,8 @@
         const homeCoords = { lat: 52.3345850808045, lon: 5.5958499010424365 }; // https://maps.app.goo.gl/yqG3jHMLT8Fa2Hb66
         let currentHeading = 0;
         let userCoords = { lat: null, lon: null };
-        let lastAngles = [];
+        let lastAngles = []; // Houd de vorige hoeken bij voor een soepele overgang
+        let lastCompassAngle = 0;  // Houd de vorige draaihoek van de windroos bij
 
         // Functie om graden om te zetten naar radialen
         function toRadians(degrees) { return degrees * (Math.PI / 180); }
@@ -89,7 +90,10 @@
         }
 
         function updateCompass() {
-            document.getElementById('compass').style.transform = `rotate(${-currentHeading}deg)`;
+            let smoothCompassRotation = shortestRotationAngle(lastCompassAngle, -currentHeading);
+            lastCompassAngle = smoothCompassRotation;  // Update de laatste waarde
+
+            document.getElementById('compass').style.transform = `rotate(${smoothCompassRotation}deg)`;
         }
 
         // Verkrijg de huidige locatie van de gebruiker
