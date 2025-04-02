@@ -32,8 +32,9 @@
 
     <script>
         const homeCoords = { lat: 52.3345850808045, lon: 5.5958499010424365 }; // https://maps.app.goo.gl/yqG3jHMLT8Fa2Hb66
-        let currentHeading = 0;  // Kompasrichting van het apparaat (van de device orientation)
-        let lastAngles = [];  // Voor smoothing van de hoeken
+        let currentHeading = 0;
+        let userCoords = { lat: null, lon: null };
+        let lastAngles = [];
 
         // Functie om graden om te zetten naar radialen
         function toRadians(degrees) { return degrees * (Math.PI / 180); }
