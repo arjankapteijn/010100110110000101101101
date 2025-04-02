@@ -12,6 +12,14 @@
             height: 200px;
             margin: 50px auto;
         }
+        #compass {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.1s ease-out;
+        }
         #arrow {
             width: 50px;
             position: absolute;
@@ -25,6 +33,7 @@
 <body>
     <h2>Deze pijl wijst naar huis:</h2>
     <div id="compass-container">
+        <img id="compass" src="compass.png">  <!-- Voeg een windroos afbeelding toe -->
         <img id="arrow" src="up-arrow.png">
     </div>
     <p id="status">Locatie ophalen...</p>
@@ -79,6 +88,10 @@
             document.getElementById('arrow').style.transform = `rotate(${smoothRotation}deg)`;
         }
 
+        function updateCompass() {
+            document.getElementById('compass').style.transform = `rotate(${-currentHeading}deg)`;
+        }
+
         // Verkrijg de huidige locatie van de gebruiker
         function getLocation() {
             if (navigator.geolocation) {
@@ -87,6 +100,7 @@
                     userCoords.lon = position.coords.longitude;
                     document.getElementById('status').textContent = `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}`;
                     updateArrow();
+                    updateCompass();
                 }, (error) => {
                     document.getElementById('status').textContent = "Locatie niet beschikbaar.";
                 }, { enableHighAccuracy: true });
@@ -104,6 +118,7 @@
                     currentHeading = 360 - event.alpha; // Android: Corrigeer alpha voor juiste richting
                 }
                 updateArrow();
+                updateCompass();
             });
         }
 
