@@ -145,23 +145,24 @@
                 navigator.geolocation.watchPosition((position) => {
                     let newLat = position.coords.latitude;
                     let newLon = position.coords.longitude;
+                    let newHeading = position.coords.heading; // Haal de heading uit GPS
 
-                    // Update locatie alleen als deze echt verandert (voorkomt onnodige updates)
-                    if (newLat !== userCoords.lat || newLon !== userCoords.lon) {
+                    if (newLat !== userCoords.lat || newLon !== userCoords.lon || newHeading !== null) {
                         userCoords.lat = newLat;
                         userCoords.lon = newLon;
 
                         let bearing = getBearing(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
                         let distance = getDistance(userCoords.lat, userCoords.lon, homeCoords.lat, homeCoords.lon);
-                        
-                        let distanceText = distance >= 1000 
-                            ? `${(distance / 1000).toFixed(2)} km` 
-                            : `${Math.round(distance)} meter`;
+                        let distanceText = distance >= 1000 ? `${(distance / 1000).toFixed(2)} km` : `${Math.round(distance)} meter`;
 
                         document.getElementById('status').innerHTML =
                             `Jouw locatie: ${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}<br>
                             Richting naar huis: ${bearing.toFixed(2)}°<br>
                             Afstand: ${distanceText}`;
+
+                        if (newHeading !== null) {
+                            currentHeading = newHeading; // Gebruik GPS-heading als beschikbaar
+                        }
 
                         updateArrow();
                         updateCompass();
